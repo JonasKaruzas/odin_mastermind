@@ -32,6 +32,7 @@ class Game
     @code = []
     @guess
     @game_won = false
+    @times_played = 0
   end
 
   def introduction
@@ -63,7 +64,7 @@ class Game
   end
 
   def generate_code
-    4.times {@code.push(rand(1..6).to_s)}
+    4.times { @code.push(rand(1..6).to_s) }
     # p @code
   end
 
@@ -72,7 +73,7 @@ class Game
     until @guess
       puts 'enter your guess. Reminder: four numbers, 1-6'
       g = gets.chomp.split("")
-      if g.length == 4 && g.all? { |e| e.to_i.between?(1,6)}
+      if g.length == 4 && g.all? { |e| e.to_i.between?(1, 6) }
         @guess = g
       else
         Game.try_again
@@ -82,7 +83,7 @@ class Game
 
   def check_win?
     if @code == @guess
-      p 'winner'
+      puts 'You are the winner!!!'
       @game_won = true
     else
       false
@@ -101,7 +102,7 @@ class Game
       end
     end
 
-    p clues.sort
+    puts clues.sort.join(' ')
   end
 
   def play
@@ -109,13 +110,15 @@ class Game
     game_mode?
     generate_code
 
-
-    until @game_won
+    until @game_won || @times_played == 12
       enter_guess
       if check_win? == false
         give_clues
       end
+      @times_played += 1
     end
+
+    puts 'Too many attempts. You lost :('
   end
 
 
