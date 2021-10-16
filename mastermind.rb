@@ -1,20 +1,4 @@
-# Intro, instructions
-# Maker or braker
-
-# IF breaker
-  # generate code
-
-  # ask for a guess
-  # give result
-  # if not correct REPEAT
-
-# IF Maker
-  # enter code
-
-  # ask for a guess
-  # give result
-  # if not correct REPEAT
-
+# Error messages
 module ErrorMsg
   def try_again
     puts 'Error! Try again'
@@ -22,17 +6,23 @@ module ErrorMsg
   end
 end
 
-
+# Mastermind game
 class Game
   extend ErrorMsg
 
-  
+  attr_accessor :correct_numbers, :permutations, :perm_num
+
   def initialize
     @game_mode = nil
     @code = []
+    @enter_code
     @guess
+    @correct_numbers = []
+    @permutations = []
+    @perm_num = 0
     @game_won = false
     @times_played = 0
+    @clues = []
   end
 
   def introduction
@@ -68,11 +58,25 @@ class Game
     # p @code
   end
 
+  def enter_code
+    @enter_code = nil
+    until @enter_code
+      puts 'enter your code. Reminder: four numbers, 1-6'
+      g = gets.chomp.split('')
+      if g.length == 4 && g.all? { |e| e.to_i.between?(1, 6) }
+        @enter_code = g
+      else
+        Game.try_again
+      end
+    end
+    @code = @enter_code
+  end
+
   def enter_guess
     @guess = nil
     until @guess
       puts 'enter your guess. Reminder: four numbers, 1-6'
-      g = gets.chomp.split("")
+      g = gets.chomp.split('')
       if g.length == 4 && g.all? { |e| e.to_i.between?(1, 6) }
         @guess = g
       else
@@ -81,9 +85,37 @@ class Game
     end
   end
 
+  def computer_guess
+    if self.correct_numbers.length < 4  
+      if @clues.count('X') > 0 
+        @clues.count('X').times do 
+          self.correct_numbers.push(@guess[0])
+        end
+      end 
+
+      if @times_played == 5 
+        (4 - self.correct_numbers.length).times {self.correct_numbers.push('6')} 
+        @guess = self.correct_numbers
+      end
+    end
+
+    if self.correct_numbers.length == 4
+      # "Algorithm"
+      @guess = self.correct_numbers
+      @guess.permutation() { |i| @permutations.push(i) }
+      @guess = @permutations[@perm_num]
+      @perm_num += 1
+
+    else
+      @guess = Array.new(4) {(@times_played + 1).to_s}
+    end
+
+    p @guess
+  end
+
   def check_win?
     if @code == @guess
-      puts 'You are the winner!!!'
+      puts 'Winner!!!'
       @game_won = true
     else
       false
@@ -92,38 +124,56 @@ class Game
   end
 
   def give_clues
-    clues = []
-
+    @clues = []
     @guess.each_with_index do |item, idx|
       if @code[idx] == item
-        clues.push('X')
+        @clues.push('X')
       elsif @code.include? item
-        clues.push('O')
+        @clues.push('O')
       end
     end
 
-    puts clues.sort.join(' ')
+    puts @clues.sort.join(' ')
+  end
+
+  def check_times_played
+    if @times_played == 12
+      puts 'Too many attempts :('
+    end  
   end
 
   def play
     introduction
     game_mode?
-    generate_code
+    if @game_mode == 2
+      generate_code
 
-    until @game_won || @times_played == 12
-      enter_guess
-      if check_win? == false
-        give_clues
+      until @game_won || @times_played == 12
+        enter_guess
+        if check_win? == false
+          give_clues
+        end
+        @times_played += 1
+        check_times_played
       end
-      @times_played += 1
+
+    else
+      enter_code
+
+      until @game_won || @times_played == 12
+        computer_guess
+        if check_win? == false
+          give_clues
+        end
+        @times_played += 1
+        check_times_played
+      end
+
     end
 
-    puts 'Too many attempts. You lost :('
   end
 
-
 end
-
 
 game = Game.new
 game.play
